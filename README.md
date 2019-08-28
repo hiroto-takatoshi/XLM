@@ -2,6 +2,10 @@
 
 Links to our corpus and datasets:
 
+- [java corpus for pre-training](https://drive.google.com/open?id=1csI43IF999z5jr6KmgAcIkVgLcMJPS8i)
+- [syntactical defect database](https://drive.google.com/open?id=1FlvIuI8x2MtZVZpHEmchQ3aL3kWC5l18)
+- [general bug commit database](https://drive.google.com/open?id=1ISokp_GStY-whndTpzDaNnFLCLHdEnMD)
+
 To reproduce the experiment, replace the `.all` file for the `en.all` file, remove the `wget` lines in the scripts and replace the tsv files into the QNLI task.
 
 Below is the original readme.
