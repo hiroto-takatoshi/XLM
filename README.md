@@ -1,5 +1,11 @@
 # XLM
 
+Links to our corpus and datasets:
+
+To reproduce the experiment, replace the `.all` file for the `en.all` file, remove the `wget` lines in the scripts and replace the tsv files into the QNLI task.
+
+Below is the original readme.
+
 PyTorch original implementation of [Cross-lingual Language Model Pretraining](https://arxiv.org/abs/1901.07291). Includes:
 - [Monolingual language model pretraining (BERT)](#i-monolingual-language-model-pretraining-bert)
 - [Cross-lingual language model pretraining (XLM)](#ii-cross-lingual-language-model-pretraining-xlm)
