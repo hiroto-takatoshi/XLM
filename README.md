@@ -1,5 +1,7 @@
 # XLM for defects
 
+[arXiv paper](https://arxiv.org/abs/1909.10309)
+
 Links to our corpus and datasets:
 
 - [java corpus for pre-training](https://drive.google.com/open?id=1csI43IF999z5jr6KmgAcIkVgLcMJPS8i)
