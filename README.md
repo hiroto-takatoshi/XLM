@@ -12,6 +12,8 @@ To reproduce the experiment, replace the `.all` file for the `en.all` file, remo
 
 Below is the original readme.
 
+----
+
 **NEW:** Added [XLM-R](https://arxiv.org/abs/1911.02116) model.
 
 PyTorch original implementation of [Cross-lingual Language Model Pretraining](https://arxiv.org/abs/1901.07291). Includes:
