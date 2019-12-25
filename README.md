@@ -12,6 +12,8 @@ To reproduce the experiment, replace the `.all` file for the `en.all` file, remo
 
 Below is the original readme.
 
+**NEW:** Added [XLM-R](https://arxiv.org/abs/1911.02116) model.
+
 PyTorch original implementation of [Cross-lingual Language Model Pretraining](https://arxiv.org/abs/1901.07291). Includes:
 - [Monolingual language model pretraining (BERT)](#i-monolingual-language-model-pretraining-bert)
 - [Cross-lingual language model pretraining (XLM)](#ii-cross-lingual-language-model-pretraining-xlm)
@@ -19,7 +21,6 @@ PyTorch original implementation of [Cross-lingual Language Model Pretraining](ht
 - [Applications: Cross-lingual text classification (XNLI)](#iv-applications-cross-lingual-text-classification-xnli)
 - [Product-Key Memory Layers (PKM)](#v-product-key-memory-layers-pkm)
 
-**Update:** [**New models in 17 and 100 languages**](#pretrained-cross-lingual-language-models)
 
 <br>
 <br>
@@ -207,6 +208,46 @@ python glue-xnli.py
 **Tips**: You should sweep over the batch size (4 and 8) and the learning rate (5e-6, 2.5e-5, 1.25e-4) parameters.
 
 ## II. Cross-lingual language model pretraining (XLM)
+
+### **XLM-R (new model)**
+[XLM-R](https://arxiv.org/abs/1911.02116) is the new state-of-the-art XLM model. XLM-R shows the possibility of training one model for many languages while not sacrificing per-language performance. It is trained on 2.5 TB of CommonCrawl data, in 100 languages. You can load XLM-R from torch.hub (Pytorch >= 1.1):
+
+```python
+# XLM-R model
+import torch
+xlmr = torch.hub.load('pytorch/fairseq', 'xlmr.large')
+xlmr.eval()
+```
+
+Apply sentence-piece-model (SPM) encoding to input text:
+```python
+en_tokens = xlmr.encode('Hello world!')
+assert en_tokens.tolist() == [0, 35378,  8999, 38, 2]
+xlmr.decode(en_tokens)  # 'Hello world!'
+
+ar_tokens = xlmr.encode('مرحبا بالعالم')
+assert ar_tokens.tolist() == [0, 665, 193478, 258, 1705, 77796, 2]
+xlmr.decode(ar_tokens) # 'مرحبا بالعالم'
+
+zh_tokens = xlmr.encode('你好，世界')
+assert zh_tokens.tolist() == [0, 6, 124084, 4, 3221, 2]
+xlmr.decode(zh_tokens)  # '你好，世界'
+```
+
+Extract features from XLM-R:
+
+```python
+# Extract the last layer's features
+last_layer_features = xlmr.extract_features(zh_tokens)
+assert last_layer_features.size() == torch.Size([1, 6, 1024])
+
+# Extract all layer's features (layer 0 is the embedding layer)
+all_layers = xlmr.extract_features(zh_tokens, return_all_hiddens=True)
+assert len(all_layers) == 25
+assert torch.all(all_layers[-1] == last_layer_features)
+```
+
+XLM-R handles the following 100 languages: *Afrikaans, Albanian, Amharic, Arabic, Armenian, Assamese, Azerbaijani, Basque, Belarusian, Bengali, Bengali Romanized, Bosnian, Breton, Bulgarian, Burmese, Burmese, Catalan, Chinese (Simplified), Chinese (Traditional), Croatian, Czech, Danish, Dutch, English, Esperanto, Estonian, Filipino, Finnish, French, Galician, Georgian, German, Greek, Gujarati, Hausa, Hebrew, Hindi, Hindi Romanized, Hungarian, Icelandic, Indonesian, Irish, Italian, Japanese, Javanese, Kannada, Kazakh, Khmer, Korean, Kurdish (Kurmanji), Kyrgyz, Lao, Latin, Latvian, Lithuanian, Macedonian, Malagasy, Malay, Malayalam, Marathi, Mongolian, Nepali, Norwegian, Oriya, Oromo, Pashto, Persian, Polish, Portuguese, Punjabi, Romanian, Russian, Sanskri, Scottish, Gaelic, Serbian, Sindhi, Sinhala, Slovak, Slovenian, Somali, Spanish, Sundanese, Swahili, Swedish, Tamil, Tamil Romanized, Telugu, Telugu Romanized, Thai, Turkish, Ukrainian, Urdu, Urdu Romanized, Uyghur, Uzbek, Vietnamese, Welsh, Western, Frisian, Xhosa, Yiddish*.
 
 ### Pretrained cross-lingual language models
 
@@ -606,8 +647,10 @@ python glue-xnli.py
 --model_path mlm_tlm_xnli15_1024.pth     # model location
 --data_path ./data/processed/XLM15       # data location
 --transfer_tasks XNLI,SST-2              # transfer tasks (XNLI or GLUE tasks)
---optimizer adam,lr=0.000005             # optimizer
---batch_size 8                           # batch size
+--optimizer_e adam,lr=0.000025           # optimizer of projection (lr \in [0.000005, 0.000025, 0.000125])
+--optimizer_p adam,lr=0.000025           # optimizer of projection (lr \in [0.000005, 0.000025, 0.000125])
+--finetune_layers "0:_1"                 # fine-tune all layers
+--batch_size 8                           # batch size (\in [4, 8])
 --n_epochs 250                           # number of epochs
 --epoch_size 20000                       # number of sentences per epoch
 --max_len 256                            # max number of words in sentences
@@ -646,7 +689,7 @@ Please cite [[1]](https://arxiv.org/abs/1901.07291) if you found the resources i
 @article{lample2019cross,
   title={Cross-lingual Language Model Pretraining},
   author={Lample, Guillaume and Conneau, Alexis},
-  journal={arXiv preprint arXiv:1901.07291},
+  journal={Advances in Neural Information Processing Systems (NeurIPS)},
   year={2019}
 }
 ```
@@ -685,7 +728,22 @@ Please cite [[1]](https://arxiv.org/abs/1901.07291) if you found the resources i
 @article{lample2019large,
   title={Large Memory Layers with Product Keys},
   author={Lample, Guillaume and Sablayrolles, Alexandre and Ranzato, Marc'Aurelio and Denoyer, Ludovic and J{\'e}gou, Herv{\'e}},
-  journal={arXiv preprint arXiv:1907.05242},
+  journal={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2019}
+}
+```
+
+### Unsupervised Cross-lingual Representation Learning at Scale
+
+[5] A. Conneau *, K. Khandelwal *, N. Goyal, V. Chaudhary, G. Wenzek, F. Guzman, E. Grave, M. Ott, L. Zettlemoyer, V. Stoyanov [*Unsupervised Cross-lingual Representation Learning at Scale*](https://arxiv.org/abs/1911.02116)
+
+\* Equal contribution
+
+```
+@article{conneau2019unsupervised,
+  title={Unsupervised Cross-lingual Representation Learning at Scale},
+  author={Conneau, Alexis and Khandelwal, Kartikay and Goyal, Naman and Chaudhary, Vishrav and Wenzek, Guillaume and Guzm{\'a}n, Francisco and Grave, Edouard and Ott, Myle and Zettlemoyer, Luke and Stoyanov, Veselin},
+  journal={arXiv preprint arXiv:1911.02116},
   year={2019}
 }
 ```
@@ -693,3 +751,4 @@ Please cite [[1]](https://arxiv.org/abs/1901.07291) if you found the resources i
 ## License
 
 See the [LICENSE](LICENSE) file for more details.
+
